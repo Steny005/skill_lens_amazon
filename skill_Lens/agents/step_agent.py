@@ -1,37 +1,23 @@
 import boto3
-import json
 
-def extract_steps(transcript):
-
-    prompt = f"""
-    Convert the following tutorial transcript into clear numbered learning steps.
-
-    Transcript:
-    {transcript}
-
-    Format:
-    Step 1:
-    Step 2:
-    Step 3:
-    """
+def generate_steps_from_frames(frame_list):
 
     client = boto3.client("bedrock-runtime")
 
-    body = json.dumps({
-        "inputText": prompt,
-        "textGenerationConfig": {
-            "maxTokenCount": 400,
-            "temperature": 0.2
-        }
-    })
+    steps = []
 
-    response = client.invoke_model(
-        body=body,
-        modelId="amazon.nova-2-lite",
-        accept="application/json",
-        contentType="application/json"
-    )
+    for frame in frame_list:
 
-    result = json.loads(response["body"].read())
+        prompt = f"""
+        Look at this tutorial frame and describe the action
+        as a clear instruction step along with the correct directions like left to right etc.
+        """
 
-    return result["results"][0]["outputText"]
+        response = client.invoke_model(
+            modelId="amazon.nova-2-lite",
+            body=prompt
+        )
+
+        steps.append(response)
+
+    return steps
